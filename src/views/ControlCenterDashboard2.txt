@@ -1,0 +1,113 @@
+<template>
+  <div class="map-wrapper">
+    <div ref="chartRef" class="map"></div>
+  </div>
+</template>
+
+<script setup>
+import { ref, onMounted, onBeforeUnmount } from "vue"
+import * as echarts from "echarts"
+import "echarts-gl"
+import axios from "axios"
+
+const chartRef = ref(null)
+let chart = null
+
+onMounted(async () => {
+  chart = echarts.init(chartRef.value)
+
+  /* ✅ 유지 */
+  const worldRes = await fetch("/world.json")
+  const worldJson = await worldRes.json()
+  echarts.registerMap("world", worldJson)
+
+  /* ✅ 유지 */
+  const res = await axios.get("/api/stats")
+  const data = Array.isArray(res.data) ? res.data : []
+
+  console.log("API DATA:", data)
+
+  const linesData = data
+    .filter(r =>
+      r.srcX != null &&
+      r.srcY != null &&
+      r.destX != null &&
+      r.destY != null
+    )
+    .map(r => ({
+      coords: [
+        [Number(r.srcX), Number(r.srcY)],
+        [Number(r.destX), Number(r.destY)]
+      ],
+      value: r.callCnt
+    }))
+
+ console.log("==========>WORLD JSON:", worldJson.length);
+ console.log("==========>DATA LENGTH:", data.length) ;
+ console.log("==========>LINES LENGTH:", linesData.length);
+ 
+
+  chart.setOption({
+    backgroundColor: "#000",
+
+    geo3D: {
+      map: "world",
+      regionHeight: 2,
+      shading: "lambert",
+      itemStyle: {
+        color: "#07121c",
+        borderColor: "#1d5e98",
+        borderWidth: 0.4
+      },
+      light: {
+        main: { intensity: 1.2, shadow: false },
+        ambient: { intensity: 0.5 }
+      },
+      viewControl: {
+        autoRotate: false,
+        distance: 150,
+        alpha: 35,
+        beta: 0
+      }
+    },
+
+    series: [
+      {
+        type: "lines3D",
+        coordinateSystem: "geo3D",
+        blendMode: "lighter",
+        effect: {
+          show: true,
+          period: 4,
+          trailWidth: 3,
+          trailLength: 0.4,
+          trailOpacity: 1
+        },
+        lineStyle: {
+          width: 2,
+          opacity: 0.6,
+          color: "#00ffff"
+        },
+        data: linesData
+      }
+    ]
+  })
+})
+
+onBeforeUnmount(() => {
+  if (chart) chart.dispose()
+})
+</script>
+
+<style scoped>
+.map-wrapper {
+  width: 100vw;
+  height: 100vh;
+  background: #000;
+}
+
+.map {
+  width: 100%;
+  height: 100%;
+}
+</style>

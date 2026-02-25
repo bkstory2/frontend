@@ -1,13 +1,23 @@
 <template>
-  <nav>
-    <router-link to="/">Home</router-link>
-  </nav>
-  <router-view/>
+  <div id="app">
+    <HeaderMenu />
+    <main style="min-height: calc(100vh - 200px); max-width: 1200px; margin: 0 auto; padding: 20px;">
+      <router-view/>
+    </main>
+    <FooterMenu />
+  </div>
 </template>
 
 <script>
+import HeaderMenu from '@/views/menu/header.vue';
+import FooterMenu from '@/views/menu/footer.vue';
+
 export default {
-  name: 'App'
+  name: 'App',
+  components: {
+    HeaderMenu,
+    FooterMenu
+  }
 }
 </script>
 

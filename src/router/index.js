@@ -4,6 +4,8 @@ import DetailView from '../views/DetailView.vue'
 import WriteView from '../views/Write.vue'
 import UpdateView from '../views/Update.vue'
 
+import StatsDashboard from '../views/ControlCenterDashboard.vue';
+
 const routes = [
   {
     path: '/',
@@ -24,8 +26,12 @@ const routes = [
     path: '/update/:id',
     name: 'update',
     component: UpdateView
+  },
+  {
+    path: '/dashboard',
+    name: 'dashboard',
+    component: StatsDashboard
   }
-
 ]
 
 const router = createRouter({

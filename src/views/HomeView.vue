@@ -1,6 +1,6 @@
 <template>
   <div>
-    <h1>게시판</h1>
+    <h1>📌 {{ getBoardTitle() }}</h1>
     
     <!-- 검색 기능 -->
     <div style="margin-bottom: 20px; padding: 15px; background-color: #f9f9f9; border-radius: 4px;">
@@ -47,17 +47,30 @@
             <th style="padding: 10px;">User ID</th>
             <th style="padding: 10px;">Title</th>
             <th style="padding: 10px;">Body</th>
+            <th style="padding: 10px;">첨부파일</th>
             <th style="padding: 10px;">작성일</th>
+            <th style="padding: 10px;">수정일</th>
           </tr>
         </thead>
         <tbody>
-          <tr v-for="(article, index) in articles" :key="article.id" @click="$router.push(`/detail/${article.id}`)" style="cursor: pointer;">
+          <tr v-for="(article, index) in articles" :key="article.id" style="cursor: pointer;">
             <td style="padding: 8px; text-align: center;">{{ index + 1 }}</td>
             <td style="padding: 8px; text-align: center;">{{ article.id }}</td>
             <td style="padding: 8px;">{{ article.userId }}</td>
-            <td style="padding: 8px;">{{ article.title }}</td>
-            <td style="padding: 8px;">{{ article.body.substring(0, 50) }}{{ article.body.length > 50 ? '...' : '' }}</td>
-            <td style="padding: 8px; text-align: center;">{{ formatDate(article.createdAt) }}</td>
+            <td style="padding: 8px; cursor: pointer;" @click="goToDetail(article)">{{ article.title }}</td>
+            <td style="padding: 8px; cursor: pointer;" @click="goToDetail(article)">{{ article.body.substring(0, 50) }}{{ article.body.length > 50 ? '...' : '' }}</td>
+            <td style="padding: 8px; text-align: center;">
+              <a v-if="article.fileNm" 
+                 :href="`http://localhost:7789/api/board/download/${article.fileNm}`" 
+                 download
+                 style="color: #2196f3; text-decoration: none; font-weight: bold; cursor: pointer;"
+                 @click.stop>
+                📥 {{ article.fileNm }}
+              </a>
+              <span v-else style="color: #999;">-</span>
+            </td>
+            <td style="padding: 8px; text-align: center; cursor: pointer;" @click="goToDetail(article)">{{ formatDate(article.createdAt) }}</td>
+            <td style="padding: 8px; text-align: center; cursor: pointer;" @click="goToDetail(article)">{{ article.updatedAt ? formatDate(article.updatedAt) : '-' }}</td>
           </tr>
         </tbody>
       </table>
@@ -73,7 +86,7 @@
     </div>
 
     <div style="margin-top: 20px;">
-      <button @click="$router.push('/write')" style="padding: 10px 20px; background-color: #42b983; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 16px;">
+      <button @click="goToWrite" style="padding: 10px 20px; background-color: #42b983; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 16px;">
         ✏️ 글쓰기
       </button>
     </div>
@@ -87,6 +100,7 @@ export default {
   name: "HomeView",
   data() {
     return {
+      boardId: 'free',
       articles: [],
       search: {
         userId: '',
@@ -98,14 +112,31 @@ export default {
     };
   },
   async created() {
+    this.boardId = this.$route.query.board_id || 'free';
     await this.loadArticles();
   },
+  watch: {
+    '$route.query.board_id'() {
+      this.boardId = this.$route.query.board_id || 'free';
+      this.resetSearch();
+    }
+  },
   methods: {
+    getBoardTitle() {
+      const titles = {
+        'free': '자유게시판',
+        'notice': '공지사항',
+        'qna': 'Q&A'
+      };
+      return titles[this.boardId] || '게시판';
+    },
     async loadArticles() {
       try {
         this.loading = true;
         this.error = null;
-        const params = {};
+        const params = {
+          board_id: this.boardId
+        };
         if (this.search.userId) params.userId = this.search.userId;
         if (this.search.title) params.title = this.search.title;
         if (this.search.body) params.body = this.search.body;
@@ -127,6 +158,19 @@ export default {
         body: ''
       };
       this.loadArticles();
+    },
+    goToDetail(article) {
+      this.$router.push({
+        name: 'detail',
+        params: { id: article.id },
+        query: { board_id: this.boardId }
+      });
+    },
+    goToWrite() {
+      this.$router.push({
+        name: 'write',
+        query: { board_id: this.boardId }
+      });
     },
     formatDate(dateStr) {
       if (!dateStr) return '-';

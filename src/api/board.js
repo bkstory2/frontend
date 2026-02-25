@@ -1,10 +1,11 @@
 import axios from "axios";
 
-const BASE_URL = "http://localhost:9000/api/board";
+const BASE_URL = "http://localhost:8080/api/board";
 
 export default {
   // 단건 조회
   getArticle: function (id) {
+    
     return axios.get(`${BASE_URL}/${id}`).then((res) => {
       console.log(res.data);
       return res;
@@ -13,18 +14,19 @@ export default {
 
   // 다건 조회 (검색 기능 포함)
   getArticles: function (params = {}) {
-    const { userId, title, body } = params;
+   
     return axios.get(BASE_URL, { 
-      params: { userId, title, body } 
+      params: params 
     }).then((res) => {
+     
       console.log(res.data);
       return res;
     });
   },
 
   // 등록
-  postArticle: function (userId, title, body) {
-    const article = { userId, title, body };          
+  postArticle: function (board_id, userId, title, body, file_nm) {
+    const article = { boardId: board_id, userId, title, body, fileNm: file_nm };          
     return axios.post(BASE_URL, article).then((res) => {
       console.log(res.data);
       return res;
@@ -32,8 +34,8 @@ export default {
   },
 
   // 수정
-  updateArticle: function (id, userId, title, body) {
-    const article = { id, userId, title, body };
+  updateArticle: function (id, board_id, userId, title, body, file_nm) {
+    const article = { id, boardId: board_id, userId, title, body, fileNm: file_nm };
     return axios.put(BASE_URL, article).then((res) => {
       console.log(res.data);
       return res;
