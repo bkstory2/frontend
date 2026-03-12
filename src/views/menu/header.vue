@@ -52,7 +52,7 @@ export default {
     goToBoard(boardId) {
       this.currentBoardId = boardId;
       this.$router.push({
-        name: 'home',
+        name: 'board-list',
         query: { board_id: boardId }
       });
     },

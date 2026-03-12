@@ -1,29 +1,33 @@
 import { createRouter, createWebHistory } from 'vue-router'
-import HomeView from '../views/HomeView.vue'
-import DetailView from '../views/DetailView.vue'
-import WriteView from '../views/Write.vue'
-import UpdateView from '../views/Update.vue'
+import BoardList from '../pages/board/BoardList.vue'
+import DetailView from '../pages/board/DetailView.vue'
+import WriteView from '../pages/board/WriteView.vue'
+import UpdateView from '../pages/board/UpdateView.vue'
 
 import StatsDashboard from '../views/ControlCenterDashboard.vue';
 
 const routes = [
   {
     path: '/',
-    name: 'home',
-    component: HomeView
+    redirect: '/board'
   },
   {
-    path: '/detail/:id',
+    path: '/board',
+    name: 'board-list',
+    component: BoardList
+  },
+  {
+    path: '/board/detail/:id',
     name: 'detail',
     component: DetailView
   },
   {
-    path: '/write',
+    path: '/board/write',
     name: 'write',
     component: WriteView
   },
   {
-    path: '/update/:id',
+    path: '/board/update/:id',
     name: 'update',
     component: UpdateView
   },

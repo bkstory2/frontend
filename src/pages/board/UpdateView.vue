@@ -138,6 +138,7 @@
 
 <script>
 import boardApi from '@/api/board';
+import { getBoardTitle, formatDate } from '@/utils/boardUtils';
 
 export default {
   name: 'UpdateView',
@@ -167,136 +168,84 @@ export default {
       const res = await boardApi.getArticle(id);
       this.article = res.data;
       this.loading = false;
-      console.log('게시글 로드:', this.article);
     } catch (err) {
       this.error = err.message;
       this.loading = false;
-      console.error('데이터 로딩 실패:', err);
     }
   },
   methods: {
     getBoardTitle() {
-      const titles = {
-        'free': '자유게시판',
-        'notice': '공지사항',
-        'qna': 'Q&A'
-      };
-      return titles[this.boardId] || '게시판';
+      return getBoardTitle(this.boardId);
     },
+    formatDate,
     onFileSelected(event) {
       this.selectedFile = event.target.files[0] || null;
-      console.log('파일 선택:', this.selectedFile?.name);
     },
     onFileDropped(event) {
       this.dragOver = false;
       const files = event.dataTransfer.files;
       if (files.length > 0) {
         this.selectedFile = files[0];
-        console.log('파일 드롭됨:', this.selectedFile.name);
       }
     },
     deleteSelectedFile() {
       this.selectedFile = null;
       this.$refs.fileInput.value = '';
-      console.log('새 파일 삭제됨');
     },
     deleteCurrentFile() {
-      this.deleteFileFromServer(this.article.id, this.article.fileNm);
+      this.article.fileNm = null;
     },
-    async deleteFileFromServer(articleId, fileName) {
-      if (!fileName) return;
-      
+    async submitUpdate() {
       try {
-        this.message = '파일 삭제 중...';
-        const response = await fetch(`http://localhost:7789/api/board/${articleId}/delete-file/${encodeURIComponent(fileName)}`, {
-          method: 'DELETE'
-        });
-
-        if (!response.ok) {
-          throw new Error('파일 삭제 실패: ' + response.statusText);
+        this.message = '';
+        this.error = null;
+        if (this.selectedFile) {
+          this.message = '파일 업로드 중...';
+          this.article.fileNm = await this.uploadFile();
         }
-
-        this.article.fileNm = null;
-        this.message = '파일이 삭제되었습니다 (DB에 자동 반영됨)';
-        console.log('파일 및 DB 삭제 성공:', fileName);
+        await boardApi.updateArticle(
+          this.article.id,
+          this.boardId,
+          this.article.userId,
+          this.article.title,
+          this.article.body,
+          this.article.fileNm
+        );
+        this.message = '게시글이 수정되었습니다.';
+        setTimeout(() => {
+          this.goBack();
+        }, 1000);
       } catch (err) {
-        this.error = '파일 삭제 중 오류 발생: ' + err.message;
-        console.error('파일 삭제 실패:', err);
+        this.error = err.message || '게시글 수정에 실패했습니다.';
       }
     },
     async uploadFile() {
       if (!this.selectedFile) {
         return null;
       }
-
       try {
         this.uploading = true;
         const formData = new FormData();
         formData.append('file', this.selectedFile);
-
         const response = await fetch('http://localhost:7789/api/board/upload', {
           method: 'POST',
           body: formData
         });
-
         if (!response.ok) {
           throw new Error('파일 업로드 실패: ' + response.statusText);
         }
-
         const fileName = await response.text();
-        console.log('파일 업로드 성공:', fileName);
         return fileName;
       } catch (err) {
         this.error = '파일 업로드 중 오류 발생: ' + err.message;
-        console.error('파일 업로드 실패:', err);
         throw err;
       } finally {
         this.uploading = false;
       }
     },
-    async submitUpdate() {
-      try {
-        this.message = '';
-        this.error = null;
-
-        // 새 파일이 있으면 업로드
-        if (this.selectedFile) {
-          this.message = '파일 업로드 중...';
-          this.article.fileNm = await this.uploadFile();
-        }
-
-        // 게시글 수정
-        this.message = '게시글 수정 중...';
-        const res = await boardApi.updateArticle(
-          this.article.id,
-          this.article.boardId || this.boardId,
-          this.article.userId,
-          this.article.title,
-          this.article.body,
-          this.article.fileNm
-        );
-        
-        console.log('게시글 수정 성공:', res.data);
-        this.message = '게시글이 성공적으로 수정되었습니다!';
-        
-        // 1초 후 상세 페이지로 이동
-        setTimeout(() => {
-          this.$router.push({
-            name: 'detail',
-            params: { id: this.article.id },
-            query: { board_id: this.boardId }
-          });
-        }, 1000);
-        
-      } catch (err) {
-        this.error = err.message;
-        console.error('게시글 수정 실패:', err);
-      }
-    },
     goBack() {
       this.$router.push({
-        name: 'detail',
-        params: { id: this.article.id },
+        name: 'board-list',
         query: { board_id: this.boardId }
       });
     }
@@ -307,10 +256,5 @@ export default {
 <style scoped>
 button:hover {
   opacity: 0.8;
-}
-
-input:focus, textarea:focus {
-  outline: none;
-  border-color: #42b983;
 }
 </style>

@@ -70,6 +70,7 @@
 <script>
 
     import boardApi from '@/api/board';
+    import { getBoardTitle, formatDate } from '@/utils/boardUtils';
     
     export default {
         name: "DetailView",
@@ -87,26 +88,15 @@
             try {
                 const res = await boardApi.getArticle(id);
                 this.article = res.data;
-                console.log("게시글 상세 정보:", this.article);
             } catch (err) {
                 this.error = err;
-                console.error("데이터 로딩 실패:", err);
             }
         },
         methods: {
             getBoardTitle() {
-              const titles = {
-                'free': '자유게시판',
-                'notice': '공지사항',
-                'qna': 'Q&A'
-              };
-              return titles[this.article?.board_id] || this.article?.board_id || '게시판';
+              return getBoardTitle(this.article?.board_id);
             },
-            formatDate(dateStr) {
-                if (!dateStr) return '-';
-                const date = new Date(dateStr);
-                return date.toLocaleDateString('ko-KR') + ' ' + date.toLocaleTimeString('ko-KR');
-            },
+            formatDate,
             async confirmDelete() {
                 if (confirm('정말로 이 게시글을 삭제하시겠습니까?')) {
                     await this.deleteArticle();
@@ -116,15 +106,11 @@
                 try {
                     await boardApi.deleteArticle(this.article.id);
                     this.message = '게시글이 삭제되었습니다.';
-                    console.log('게시글 삭제 성공');
-                    
-                    // 1초 후 목록으로 이동
                     setTimeout(() => {
                         this.goToList();
                     }, 1000);
                 } catch (err) {
                     this.error = err;
-                    console.error('게시글 삭제 실패:', err);
                     alert('게시글 삭제에 실패했습니다.');
                 }
             },
@@ -137,7 +123,7 @@
             },
             goToList() {
               this.$router.push({
-                name: 'home',
+                name: 'board-list',
                 query: { board_id: this.boardId }
               });
             }
