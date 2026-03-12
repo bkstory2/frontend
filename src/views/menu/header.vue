@@ -17,6 +17,12 @@
         >
           📊 대시보드
         </router-link>
+        <router-link 
+          to="/dashboard2" 
+          style="background: #fff; color: #42b983; font-weight: bold; border-radius: 4px; padding: 8px 16px; text-decoration: none; margin-left: 10px;"
+        >
+          🌐 대시보드2
+        </router-link>
       </nav>
     </div>
   </header>
